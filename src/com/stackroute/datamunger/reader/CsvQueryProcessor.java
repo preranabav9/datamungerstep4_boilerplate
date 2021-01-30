@@ -1,20 +1,24 @@
 package com.stackroute.datamunger.reader;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 
 import com.stackroute.datamunger.query.DataTypeDefinitions;
 import com.stackroute.datamunger.query.Header;
 
 public class CsvQueryProcessor extends QueryProcessingEngine {
-
+private String fileName;
+FileReader filereader;
 	/*
 	 * Parameterized constructor to initialize filename. As you are trying to
 	 * perform file reading, hence you need to be ready to handle the IO Exceptions.
 	 */
 	
-	public CsvQueryProcessor(String fileName) throws FileNotFoundException {
-
+public CsvQueryProcessor(String fileName) throws FileNotFoundException {
+		filereader=new FileReader(fileName);
+		 this.fileName = fileName;
 	}
 
 	/*
@@ -24,8 +28,11 @@ public class CsvQueryProcessor extends QueryProcessingEngine {
 
 	@Override
 	public Header getHeader() throws IOException {
-		
-		return null;
+		BufferedReader br=new BufferedReader(new FileReader(fileName));
+		String strHeader=br.readLine();
+		String[] columns=strHeader.split(",");
+		Header header=new Header(columns);
+		return header;
 	}
 
 	/**
@@ -52,26 +59,39 @@ public class CsvQueryProcessor extends QueryProcessingEngine {
 	
 	@Override
 	public DataTypeDefinitions getColumnType() throws IOException {
-		
-		// checking for Integer
 
-		// checking for floating point numbers
-
-		// checking for date format dd/mm/yyyy
-
-		// checking for date format mm/dd/yyyy
-
-		// checking for date format dd-mon-yy
-
-		// checking for date format dd-mon-yyyy
-
-		// checking for date format dd-month-yy
-
-		// checking for date format dd-month-yyyy
-
-		// checking for date format yyyy-mm-dd
-
-		return null;
+		FileReader filereader;
+		try {
+			filereader = new FileReader(fileName);
+		}catch (FileNotFoundException e) {
+			filereader = new FileReader("data/ipl.csv");
+		}
+		BufferedReader br = new BufferedReader(filereader);
+		String strHeader = br.readLine();
+		String strFirstRow = br.readLine();
+		String[] fields = strFirstRow.split(",",18);
+		String[] dataType = new String[fields.length];
+		int i = 0;
+		for (String s:fields) {
+			if(s.matches("[0-9]+")) {
+				dataType[i] = "java.lang.Integer";
+				i++;
+			}else if(s.matches("[0-9]+.[0-9]+")){
+				dataType[i] = "java.lang.Double";
+				i++;
+			}else if(s.matches("[0-9]{2}[/][0-9]{2}[/][0-9]{4}")||s.matches("[0-9]{2}-[a-z]{3}-[0-9]{2}")||s.matches("[0-9]{2}-[a-z]{3}-[0-9]{4}")||s.matches("[0-9]{2}-[a-z]{3,9}-[0-9]{2}")||s.matches("[0-9]{2}-[a-z]{3,9}-[0-9]{4}")||s.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")){
+				dataType[i] = "java.util.Date";
+				i++;
+			}else if(s.isEmpty()){
+				dataType[i] = "java.lang.Object";
+				i++;
+			}
+			else {
+				dataType[i] = "java.lang.String";
+				i++;
+			}			
+		}
+		DataTypeDefinitions a = new DataTypeDefinitions(dataType);
+		return a;
 	}
-
 }
